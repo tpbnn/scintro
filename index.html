@@ -833,7 +833,7 @@ const raceMap = {
   T:{label:'TERRAN', icon:'T', color:'#3b82f6', symbol:'t.png'},
   Z:{label:'ZERG', icon:'Z', color:'#a855f7', symbol:'z.png'},
   P:{label:'PROTOSS', icon:'P', color:'#facc15', symbol:'p.png'},
-  R:{label:'RANDOM', icon:'R', color:'#e5e7eb', symbol:'t.png'}
+  R:{label:'STARCRAFT', icon:'R', color:'#e5e7eb', symbol:'r.png'}
 };
 
 const state = {
@@ -1139,7 +1139,7 @@ function applyPlayer(side, fallbackName, player, score){
   $(`score${side}`).textContent = score;
   $(`race${side}`).textContent = race.label;
   $(`raceIcon${side}`).textContent = race.icon;
-  $(`meta${side}`).textContent = player ? `${player.team || '소속 없음'} · ${player.tier || '티어 없음'}` : 'tier.xlsx 정보 없음';
+  $(`meta${side}`).textContent = player ? `${player.team || '소속 없음'} · ${player.tier || '티어 없음'}` : '';
 
   $(`info${side}`).style.setProperty('--accent', color);
   $(`media${side}`).style.setProperty('--accent', color);
@@ -1182,7 +1182,9 @@ function renderRaceSymbol(box, race){
 
   const img = document.createElement('img');
   img.className = 'race-symbol';
-  img.src = `assets/images/${race.symbol}`;
+
+  // race.symbol이 파일명(r.png)이어도, 절대경로(/assets/images/r.png)여도 모두 대응
+  img.src = race.symbol.startsWith('/') ? race.symbol : `assets/images/${race.symbol}`;
   img.alt = race.label;
 
   img.onerror = ()=>{
