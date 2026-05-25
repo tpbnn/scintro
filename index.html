@@ -1022,6 +1022,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   applySelectedToOverlay();
 });
 
+window.addEventListener('resize', ()=>{
+  requestAnimationFrame(runAutoFit);
+});
+
 function bindEvents(){
   $('applyChromaBtn').addEventListener('click', applyChromaColor);
   $('chromaToggleBtn').addEventListener('click', toggleChroma);
@@ -1396,25 +1400,31 @@ function playSequence(){
 }
 
 
+function isPortraitMode(){
+  return window.matchMedia('(orientation: portrait), (max-width: 900px)').matches;
+}
+
 function fitMapTitleToFiveChars(){
   const el = document.getElementById('matchTitle');
   if(!el) return;
 
-  const text = el.textContent.trim();
-  const max = 32;
-  const min = 13;
+  const portrait = isPortraitMode();
 
-  // 5글자 이하는 기본 크기 유지
-  if(text.length <= 5){
-    el.style.fontSize = max + 'px';
-    return;
-  }
+  // 모드별 기본 폰트 크기
+  const max = portrait ? 22 : 32;
 
-  // 6글자 이상부터 5글자 박스 안에 들어올 때까지 축소
+  // 최소 폰트 크기
+  const min = portrait ? 10 : 13;
+
+  // 모드별 목표 폭
+  const targetWidth = portrait ? 100 : 160;
+
+  // 초기화
   el.style.fontSize = max + 'px';
 
+  // 실제 렌더링 폭 기준으로 축소
   while(
-    (el.scrollWidth >= el.clientWidth - 6) &&
+    el.scrollWidth > targetWidth &&
     parseFloat(el.style.fontSize) > min
   ){
     el.style.fontSize =
