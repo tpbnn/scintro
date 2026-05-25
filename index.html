@@ -287,6 +287,14 @@ button,input{font-family:inherit;}
   font-weight:950;
 }
 
+.fit-text{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  width:100%;
+  display:block;
+}
+
 .meta{
   margin-top:8px;
   color:var(--muted);
@@ -389,17 +397,31 @@ button,input{font-family:inherit;}
 
 .match-title{
   margin:22px auto 0;
-  width:max-content;
-  max-width:100%;
-  padding:12px 22px;
-  border-radius:18px;
+
+  width:180px;
+  height:58px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0 14px;
+  border-radius:16px;
   background:rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.1);
   backdrop-filter:blur(10px);
+
   font-size:32px;
   font-weight:950;
   letter-spacing:-.06em;
+  line-height:1;
+
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
+  text-align:center;
+  box-sizing:border-box;
+
   box-shadow:0 16px 40px rgba(0,0,0,.18);
 }
 
@@ -745,6 +767,13 @@ button:disabled{
     overflow-x:hidden;
   }
 
+
+  .match-title{
+    width:120px;
+    height:44px;
+    padding:0 10px;
+  }
+
   .app{
     height:auto;
     min-height:100vh;
@@ -783,29 +812,54 @@ button:disabled{
   }
 
 
-
-
-  .preview{
-    min-height:430px;
-    padding:80px 56px 80px;
+ .preview{
+    min-height:420px;
+    padding:clamp(42px, 8vw, 72px) clamp(42px, 8vw, 72px);
+    border-radius:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
+
+.stage{
+  position:relative;
+  left:auto;
+  top:auto;
+  transform:none;
+
+  width:100%;
+  display:grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    clamp(70px, 12vw, 110px)
+    minmax(0, 1fr);
+  gap:clamp(24px, 5vw, 28px);
+
+  align-items:center;
+  justify-items:center;
+}
+
+.player-card{
+  width:100%;
+  max-width:clamp(170px, 30vw, 260px);
+  min-width:0;
+  margin:0 auto;
+  border-radius:24px;
+}
+
+
+
+ 
 
   .sidebar{
     min-height:0;
   }
 
-  .stage{
-    width:96%;
-    grid-template-columns:1fr 140px 1fr;
-    gap:18px;
-  }
 
-  .player-card{
-    width:100%;
-    max-width:280px;
-    margin:0 auto;
-    border-radius:24px;
-  }
+
+
+
+
 
   .name{
     font-size:30px;
@@ -842,6 +896,9 @@ button:disabled{
 }
 
 
+
+
+
 </style>
 </head>
 
@@ -865,10 +922,10 @@ button:disabled{
           <div class="info" id="infoA">
             <div class="race"><span class="race-icon" id="raceIconA">T</span><span id="raceA">TERRAN</span></div>
             <div class="name-row">
-              <div class="name" id="nameA">선수A</div>
+              <div class="name fit-text" id="nameA">선수A</div>
               <div class="score" id="scoreA">0</div>
             </div>
-            <div class="meta" id="metaA">소속 · 티어</div>
+            <div class="meta fit-text" id="metaA">소속 · 티어</div>
           </div>
         </article>
 
@@ -884,10 +941,10 @@ button:disabled{
           <div class="info" id="infoB">
             <div class="race"><span class="race-icon" id="raceIconB">Z</span><span id="raceB">ZERG</span></div>
             <div class="name-row">
-              <div class="name" id="nameB">선수B</div>
+              <div class="name fit-text" id="nameB">선수B</div>
               <div class="score" id="scoreB">0</div>
             </div>
-            <div class="meta" id="metaB">소속 · 티어</div>
+            <div class="meta fit-text" id="metaB">소속 · 티어</div>
           </div>
         </article>
       </div>
@@ -895,7 +952,7 @@ button:disabled{
 
     <aside class="sidebar">
       <section class="section">
-        <div class="section-title">CHROMA KEY</div>
+        <div class="section-title">CHROMA KEY (ex:#00ff00)</div>
         <div class="chroma-row">
           <input id="chromaInput" value="#00ff00">
           <button id="applyChromaBtn">적용</button>
@@ -942,7 +999,7 @@ const raceMap = {
   T:{label:'TERRAN', icon:'T', color:'#3b82f6', symbol:'t.png'},
   Z:{label:'ZERG', icon:'Z', color:'#a855f7', symbol:'z.png'},
   P:{label:'PROTOSS', icon:'P', color:'#facc15', symbol:'p.png'},
-  R:{label:'STARCRAFT', icon:'R', color:'#e5e7eb', symbol:'r.png'}
+  R:{label:'STARCRAFT', icon:'', color:'#e5e7eb', symbol:'r.png'}
 };
 
 const state = {
@@ -1238,6 +1295,8 @@ function applySelectedToOverlay(){
   applyPlayer('B', match.b, findPlayer(match.b), score.scoreB);
 
   $('matchTitle').textContent = match.map;
+
+  requestAnimationFrame(runAutoFit);
 }
 
 function applyPlayer(side, fallbackName, player, score){
@@ -1255,6 +1314,8 @@ function applyPlayer(side, fallbackName, player, score){
   $(`raceIcon${side}`).style.color = color;
 
   renderMedia($(`media${side}`), player, race);
+
+  requestAnimationFrame(runAutoFit);
 }
 
 function renderMedia(box, player, race){
@@ -1310,6 +1371,8 @@ function clearOverlay(){
   $('scoreA').textContent = '0';
   $('scoreB').textContent = '0';
   $('matchTitle').textContent = '맵 이름';
+
+  requestAnimationFrame(runAutoFit);
 }
 
 function playSequence(){
@@ -1331,6 +1394,57 @@ function playSequence(){
     $('outputBtn').textContent = '출력하기';
   }, 4500);
 }
+
+
+function fitMapTitleToFiveChars(){
+  const el = document.getElementById('matchTitle');
+  if(!el) return;
+
+  const text = el.textContent.trim();
+  const max = 32;
+  const min = 13;
+
+  // 5글자 이하는 기본 크기 유지
+  if(text.length <= 5){
+    el.style.fontSize = max + 'px';
+    return;
+  }
+
+  // 6글자 이상부터 5글자 박스 안에 들어올 때까지 축소
+  el.style.fontSize = max + 'px';
+
+  while(
+    (el.scrollWidth >= el.clientWidth - 6) &&
+    parseFloat(el.style.fontSize) > min
+  ){
+    el.style.fontSize =
+      (parseFloat(el.style.fontSize) - 0.5) + 'px';
+  }
+}
+
+function autoFitOneLine(el, max = 39, min = 18){
+  if(!el) return;
+
+  el.style.fontSize = max + 'px';
+
+  while(
+    (el.scrollWidth >= el.clientWidth - 6) &&
+    parseFloat(el.style.fontSize) > min
+  ){
+    el.style.fontSize =
+      (parseFloat(el.style.fontSize) - 0.5) + 'px';
+  }
+}
+
+function runAutoFit(){
+  fitMapTitleToFiveChars();
+
+  autoFitOneLine(document.getElementById('nameA'), 39, 18);
+  autoFitOneLine(document.getElementById('nameB'), 39, 18);
+  autoFitOneLine(document.getElementById('metaA'), 13, 10);
+  autoFitOneLine(document.getElementById('metaB'), 13, 10);
+}
+
 
 function escapeHtml(str){
   return String(str)
