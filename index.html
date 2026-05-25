@@ -314,7 +314,7 @@ button,input{font-family:inherit;}
   position:relative;
   display:inline-block;
 
-  font-size:148px;
+  font-size:48px;
   line-height:.82;
   font-weight:1000;
   font-style:italic;
@@ -1449,8 +1449,8 @@ function autoFitOneLine(el, max = 39, min = 18){
 function runAutoFit(){
   fitMapTitleToFiveChars();
 
-  autoFitOneLine(document.getElementById('nameA'), 80, 22);
-  autoFitOneLine(document.getElementById('nameB'), 80, 22);
+  // autoFitOneLine(document.getElementById('nameA'), 80, 22);
+  // autoFitOneLine(document.getElementById('nameB'), 80, 22);
   autoFitOneLine(document.getElementById('metaA'), 13, 10);
   autoFitOneLine(document.getElementById('metaB'), 13, 10);
 }
