@@ -736,6 +736,68 @@ button:disabled{
   .match-title{font-size:28px;}
 }
 
+@media (orientation: portrait), (max-width: 900px){
+
+  .main{
+    grid-template-columns:1fr;
+    grid-template-rows:auto 1fr;
+  }
+
+  .preview{
+    min-height:430px;
+  }
+
+  .sidebar{
+    min-height:0;
+  }
+
+  .stage{
+    width:96%;
+    grid-template-columns:1fr 140px 1fr;
+    gap:18px;
+  }
+
+  .player-card{
+    width:100%;
+    max-width:280px;
+    margin:0 auto;
+    border-radius:24px;
+  }
+
+  .name{
+    font-size:30px;
+  }
+
+  .score{
+    font-size:36px;
+  }
+
+  .vs{
+    font-size:86px;
+  }
+
+  .match-title{
+    font-size:22px;
+    padding:9px 14px;
+  }
+
+  .sidebar{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .match-list-section{
+    min-height:180px;
+    max-height:260px;
+  }
+
+  .output{
+    height:58px;
+    flex:0 0 58px;
+  }
+}
+
 
 </style>
 </head>
