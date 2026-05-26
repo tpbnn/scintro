@@ -84,8 +84,8 @@ button,input{font-family:inherit;}
   flex:0 0 48px;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  padding:0 28px 0 4px;
+  padding:0 12px 0 4px;
+  gap:12px;
 }
 
 .page-title{
@@ -93,7 +93,7 @@ button,input{font-family:inherit;}
   align-items:center;
   gap:12px;
   height:48px;
-  font-size:25px;
+  font-size:clamp(8px, 1vw, 25px);
   font-weight:950;
   letter-spacing:-.06em;
   line-height:1;
@@ -109,12 +109,15 @@ button,input{font-family:inherit;}
    transform:translateY(4px);
 }
 
+
+
 .page-desc{
   color:var(--muted);
-  font-size:12px;
+  font-size:clamp(8px, 1vw, 12px);
   font-weight:700;
   padding-right:10px;
   white-space:nowrap;
+  margin-left:auto;
 }
 
 .main{
@@ -825,6 +828,72 @@ button:disabled{
 .match-title{font-size:var(--map-font);}
 }
 
+
+
+/* 가로세로모드 전환 버튼 추가 */
+body.force-portrait .main{
+  grid-template-columns:1fr;
+  grid-template-rows:auto 1fr;
+}
+
+body.force-portrait .preview{
+  min-height:420px;
+  padding:clamp(42px, 8vw, 72px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+body.force-portrait .stage{
+  position:relative;
+  left:auto;
+  top:auto;
+  transform:none;
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) clamp(70px,12vw,110px) minmax(0,1fr);
+  gap:clamp(24px,5vw,28px);
+  align-items:center;
+  justify-items:center;
+}
+
+body.force-portrait .sidebar{
+  overflow:visible;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+
+body.force-portrait .output{ order:1; }
+body.force-portrait .chroma-section{ order:2; }
+body.force-portrait .font-section{ order:3; }
+body.force-portrait .input-section{ order:4; }
+body.force-portrait .match-list-section{ order:5; }
+
+body.force-portrait html,
+body.force-portrait{
+  height:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+body.force-portrait .app{
+  height:auto;
+  min-height:100vh;
+  overflow:visible;
+}
+
+body.force-portrait .player-card{
+  width:100%;
+  max-width:clamp(170px, 30vw, 260px);
+  min-width:0;
+  margin:0 auto;
+  border-radius:24px;
+}
+
+
+
+
 @media (orientation: portrait), (max-width: 900px){
 
   html,body{
@@ -959,6 +1028,18 @@ button:disabled{
   }
 }
 
+.mode-toggle{
+  width:72px;
+  height:30px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  padding:0;
+}
+
+
+
+
 
 
 
@@ -974,6 +1055,7 @@ button:disabled{
       <span>경기를 시자아아아아아아아아악~ 하겠습니다!</span>
     </div>
     <div class="page-desc">© 2026 주니.킨콘. All Rights Reserved. Designed for 비타밍♥.</div>
+    <button class="mode-toggle" id="modeToggleBtn">세로모드</button>
   </header>
 
   <main class="main">
@@ -1133,6 +1215,8 @@ function bindEvents(){
   $('chromaToggleBtn').addEventListener('click', toggleChroma);
   $('addBtn').addEventListener('click', addMatch);
 
+$('modeToggleBtn').addEventListener('click', toggleForceMode);
+
   $('inputMap').addEventListener('keydown', e=>{
     if(e.key === 'Enter') addMatch();
   });
@@ -1149,6 +1233,15 @@ function bindEvents(){
     applySelectedToOverlay();
     playSequence();
   });
+}
+
+function toggleForceMode(){
+  document.body.classList.toggle('force-portrait');
+
+  const isPortrait = document.body.classList.contains('force-portrait');
+  $('modeToggleBtn').textContent = isPortrait ? '가로모드' : '세로모드';
+
+  requestAnimationFrame(runAutoFit);
 }
 
 // 폰트슬라이더
