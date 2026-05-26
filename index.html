@@ -8,6 +8,30 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
+
+
+.font-control{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:6px 12px;
+  margin-top:10px;
+  color:#dbeafe;
+  font-size:12px;
+  font-weight:900;
+}
+
+.font-control input{
+  grid-column:1 / -1;
+  width:100%;
+  height:28px;
+  padding:0;
+}
+
+.font-control span{
+  justify-self:end;
+  font-weight:950;
+}
+
 :root{
   --chroma:#00ff00;
   --bg:#030712;
@@ -18,6 +42,14 @@
   --red:#ef4444;
   --purple:#a855f7;
   --gold:#facc15;
+  --name-font:39px;
+--map-font:32px;
+--vs-font:48px;
+--score-font:44px;
+
+--map-box-width:180px;
+--map-box-height:58px;
+
 }
 
 *{box-sizing:border-box;}
@@ -269,23 +301,87 @@ button,input{font-family:inherit;}
   gap:16px;
 }
 
+
+
+
 .name{
   min-width:0;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  font-size:39px;
+  /* font-size:39px; */
+  font-size:var(--name-font);
+
   line-height:.95;
   font-weight:950;
   letter-spacing:-.06em;
 }
 
+.match-title{
+  margin:22px auto 0;
+
+ width:var(--map-box-width);
+height:var(--map-box-height);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0 14px;
+  border-radius:16px;
+  background:rgba(0,0,0,.50);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(10px);
+
+  /* font-size:32px; */
+
+  font-size:var(--map-font);
+  font-weight:950;
+  letter-spacing:-.06em;
+  line-height:1;
+
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  text-align:center;
+  box-sizing:border-box;
+
+  box-shadow:0 16px 40px rgba(0,0,0,.18);
+}
+
+.vs{
+  position:relative;
+  display:inline-block;
+
+  /* font-size:48px; */
+  font-size:var(--vs-font);
+  line-height:.82;
+  font-weight:1000;
+  font-style:italic;
+  letter-spacing:-0.08em;
+
+  color:#f8fafc;
+
+  text-shadow:
+    0 0 10px rgba(255,255,255,.18),
+    0 0 26px rgba(59,130,246,.16),
+    0 0 46px rgba(168,85,247,.08);
+
+  opacity:.98;
+
+  will-change:transform,opacity,filter;
+}
+
 .score{
   flex:0 0 auto;
-  font-size:44px;
+  /* font-size:44px; */
+  font-size:var(--score-font);
   line-height:.9;
   font-weight:950;
 }
+
+
+
 
 .fit-text{
   white-space:nowrap;
@@ -310,27 +406,7 @@ button,input{font-family:inherit;}
   will-change:transform,opacity,filter;
 }
 
-.vs{
-  position:relative;
-  display:inline-block;
 
-  font-size:48px;
-  line-height:.82;
-  font-weight:1000;
-  font-style:italic;
-  letter-spacing:-0.08em;
-
-  color:#f8fafc;
-
-  text-shadow:
-    0 0 10px rgba(255,255,255,.18),
-    0 0 26px rgba(59,130,246,.16),
-    0 0 46px rgba(168,85,247,.08);
-
-  opacity:.98;
-
-  will-change:transform,opacity,filter;
-}
 
 /* 뒤 오라 */
 .vs::before{
@@ -395,35 +471,6 @@ button,input{font-family:inherit;}
   }
 }
 
-.match-title{
-  margin:22px auto 0;
-
-  width:180px;
-  height:58px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  padding:0 14px;
-  border-radius:16px;
-  background:rgba(0,0,0,.50);
-  border:1px solid rgba(255,255,255,.1);
-  backdrop-filter:blur(10px);
-
-  font-size:32px;
-  font-weight:950;
-  letter-spacing:-.06em;
-  line-height:1;
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:clip;
-  text-align:center;
-  box-sizing:border-box;
-
-  box-shadow:0 16px 40px rgba(0,0,0,.18);
-}
 
 /* intro auto sequence: 0.9s in / 2.8s hold / 0.6s out / about 4.5s total */
 .stage.sequence .player-card.leftish{
@@ -753,9 +800,13 @@ button:disabled{
     grid-template-columns:285px minmax(200px,1fr) 285px;
     gap:28px;
   }
-  .name{font-size:34px;}
+  /* .name{font-size:34px;}
   .vs{font-size:112px;}
-  .match-title{font-size:28px;}
+  .match-title{font-size:28px;} */
+
+  .name{font-size:var(--name-font);}
+.vs{font-size:var(--vs-font);}
+.match-title{font-size:var(--map-font);}
 }
 
 @media (orientation: portrait), (max-width: 900px){
@@ -767,12 +818,17 @@ button:disabled{
     overflow-x:hidden;
   }
 
+.match-title{
+  width:var(--map-box-width);
+  height:var(--map-box-height);
+  padding:0 10px;
+}
 
-  .match-title{
-    width:120px;
+  /* .match-title{
+    width:160px;
     height:44px;
     padding:0 10px;
-  }
+  } */
 
   .app{
     height:auto;
@@ -795,20 +851,22 @@ button:disabled{
   }
 
 
-    .sidebar .section:nth-of-type(1){
-    order:1; /* CHROMA KEY */
+
+  .chroma-section{ order:1; }
+  .output{ order:2; }
+  .font-section{ order:3; }
+  .input-section{ order:4; }
+  .match-list-section{ order:5; }
+
+
+  .match-list-section{
+    min-height:auto;
+    max-height:none;
   }
 
-  .sidebar .output{
-    order:2; /* 출력하기 */
-  }
-
-  .sidebar .section:nth-of-type(2){
-    order:3; /* MATCH INPUT */
-  }
-
-  .sidebar .match-list-section{
-    order:4; /* MATCH LIST */
+  .match-list{
+    overflow:visible;
+    max-height:none;
   }
 
 
@@ -857,26 +915,18 @@ button:disabled{
 
 
 
+.name{ font-size:var(--name-font); }
+.score{ font-size:var(--score-font); }
+.vs{ font-size:var(--vs-font); }
+.match-title{
+  width:var(--map-box-width);
+  height:var(--map-box-height);
+  font-size:var(--map-font);
+  padding:9px 14px;
+}
 
 
 
-
-  .name{
-    font-size:30px;
-  }
-
-  .score{
-    font-size:36px;
-  }
-
-  .vs{
-    font-size:86px;
-  }
-
-  .match-title{
-    font-size:22px;
-    padding:9px 14px;
-  }
 
   .sidebar{
     display:grid;
@@ -951,8 +1001,8 @@ button:disabled{
     </section>
 
     <aside class="sidebar">
-      <section class="section">
-        <div class="section-title">CHROMA KEY (ex:#00ff00)</div>
+      <section class="section chroma-section">
+  <div class="section-title">CHROMA KEY (ex:#00ff00)</div>
         <div class="chroma-row">
           <input id="chromaInput" value="#00ff00">
           <button id="applyChromaBtn">적용</button>
@@ -961,11 +1011,36 @@ button:disabled{
       </section>
 
 
+      <!-- 폰트슬라이드 -->
+      <section class="section font-section">
+  <div class="section-title">FONT SIZE</div>
+
+  <label class="font-control">
+    선수 이름<span id="nameFontValue">39</span>
+    <input type="range" id="nameFontRange" min="24" max="80" value="39">
+  </label>
+
+<label class="font-control">
+  맵 이름 <span id="mapFontValue">32</span>
+  <input type="range" id="mapFontRange" min="12" max="48" value="32">
+</label>
+
+  <label class="font-control">
+    VS<span id="vsFontValue">48</span>
+    <input type="range" id="vsFontRange" min="32" max="160" value="48">
+  </label>
+
+  <label class="font-control">
+    스코어<span id="scoreFontValue">44</span>
+    <input type="range" id="scoreFontRange" min="24" max="80" value="44">
+  </label>
+</section>
+
       
 
 
-      <section class="section">
-        <div class="section-title">MATCH INPUT</div>
+      <section class="section input-section">
+  <div class="section-title">MATCH INPUT</div>
         <div class="match-input">
           <div class="input-wrap">
             <input id="inputA" placeholder="선수 A" autocomplete="off">
@@ -1020,6 +1095,14 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   setupAutocomplete('inputB','suggestB');
   renderMatchList();
   applySelectedToOverlay();
+
+// 폰트슬라이더
+bindFontSlider('nameFontRange', '--name-font');
+bindFontSlider('mapFontRange', '--map-font');
+bindFontSlider('vsFontRange', '--vs-font');
+bindFontSlider('scoreFontRange', '--score-font'); 
+
+
 });
 
 window.addEventListener('resize', ()=>{
@@ -1048,6 +1131,42 @@ function bindEvents(){
     playSequence();
   });
 }
+
+// 폰트슬라이더
+function bindFontSlider(inputId, cssVar){
+  const input = $(inputId);
+  if(!input) return;
+
+  const valueEl = $(inputId.replace('Range', 'Value'));
+input.addEventListener('input', ()=>{
+  const value = Number(input.value);
+
+  document.documentElement.style.setProperty(cssVar, value + 'px');
+
+  if(inputId === 'mapFontRange'){
+    document.documentElement.style.setProperty('--map-box-width', Math.round(value * 5.7) + 'px');
+    document.documentElement.style.setProperty('--map-box-height', Math.round(value * 1.8) + 'px');
+  }
+
+  if(valueEl){
+    valueEl.textContent = input.value;
+  }
+
+  requestAnimationFrame(runAutoFit);
+});
+
+
+  // input.addEventListener('input', ()=>{
+  //   document.documentElement.style.setProperty(cssVar, input.value + 'px');
+
+  //   if(valueEl){
+  //     valueEl.textContent = input.value;
+  //   }
+
+  //   requestAnimationFrame(runAutoFit);
+  // });
+}
+
 
 function applyChromaColor(){
   const color = $('chromaInput').value.trim() || '#00ff00';
@@ -1404,33 +1523,83 @@ function isPortraitMode(){
   return window.matchMedia('(orientation: portrait), (max-width: 900px)').matches;
 }
 
-function fitMapTitleToFiveChars(){
-  const el = document.getElementById('matchTitle');
-  if(!el) return;
+// function fitMapTitleToFiveChars(){
+//   const el = document.getElementById('matchTitle');
+//   if(!el) return;
 
-  const portrait = isPortraitMode();
+//   const max = parseFloat(
+//     getComputedStyle(document.documentElement).getPropertyValue('--map-font')
+//   ) || 32;
 
-  // 모드별 기본 폰트 크기
-  const max = portrait ? 22 : 32;
+//   const min = 10;
 
-  // 최소 폰트 크기
-  const min = portrait ? 10 : 13;
+//   el.style.fontSize = max + 'px';
 
-  // 모드별 목표 폭
-  const targetWidth = portrait ? 100 : 160;
+//   const targetWidth = el.clientWidth - 4;
 
-  // 초기화
-  el.style.fontSize = max + 'px';
+//   while(
+//     el.scrollWidth > targetWidth &&
+//     parseFloat(el.style.fontSize) > min
+//   ){
+//     el.style.fontSize =
+//       (parseFloat(el.style.fontSize) - 0.5) + 'px';
+//   }
+// }
 
-  // 실제 렌더링 폭 기준으로 축소
-  while(
-    el.scrollWidth > targetWidth &&
-    parseFloat(el.style.fontSize) > min
-  ){
-    el.style.fontSize =
-      (parseFloat(el.style.fontSize) - 0.5) + 'px';
-  }
-}
+// function fitMapTitleToFiveChars(){
+//   const el = document.getElementById('matchTitle');
+//   if(!el) return;
+
+//   const max = parseFloat(
+//     getComputedStyle(document.documentElement).getPropertyValue('--map-font')
+//   ) || 32;
+
+//   const min = 10;
+
+//   el.style.fontSize = max + 'px';
+
+//   const targetWidth = el.clientWidth - 8;
+
+//   while(
+//     el.scrollWidth > targetWidth &&
+//     parseFloat(el.style.fontSize) > min
+//   ){
+//     el.style.fontSize =
+//       (parseFloat(el.style.fontSize) - 0.5) + 'px';
+//   }
+// }
+
+//폰트슬라이더 
+// function fitMapTitleToFiveChars(){
+//   const el = document.getElementById('matchTitle');
+//   if(!el) return;
+
+//   const portrait = isPortraitMode();
+
+//   // 모드별 기본 폰트 크기
+//   // const max = portrait ? 22 : 32;
+
+// const max = parseFloat(getComputedStyle(document.documentElement)
+//   .getPropertyValue('--map-font')) || (portrait ? 22 : 32);
+
+//   // 최소 폰트 크기
+//   const min = portrait ? 10 : 13;
+
+//   // 모드별 목표 폭
+//   const targetWidth = portrait ? 110 : 170;
+
+//   // 초기화
+//   el.style.fontSize = max + 'px';
+
+//   // 실제 렌더링 폭 기준으로 축소
+//   while(
+//     el.scrollWidth > targetWidth &&
+//     parseFloat(el.style.fontSize) > min
+//   ){
+//     el.style.fontSize =
+//       (parseFloat(el.style.fontSize) - 0.5) + 'px';
+//   }
+// }
 
 function autoFitOneLine(el, max = 39, min = 18){
   if(!el) return;
@@ -1447,7 +1616,7 @@ function autoFitOneLine(el, max = 39, min = 18){
 }
 
 function runAutoFit(){
-  fitMapTitleToFiveChars();
+  // fitMapTitleToFiveChars();
 // 주석 : 폰트 크기 
    // autoFitOneLine(document.getElementById('nameA'), 80, 22);
   // autoFitOneLine(document.getElementById('nameB'), 80, 22);
