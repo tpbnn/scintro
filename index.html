@@ -1105,6 +1105,181 @@ body.popup-mode .preview{
   filter:brightness(1.06);
 }
 
+
+/* 영상 애니메이션 프레임 안정화 */
+.player-card,
+.media,
+.media video,
+.media img,
+.info,
+.center,
+.vs{
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
+
+.player-card,
+.center,
+.vs,
+.info{
+  transform-style:preserve-3d;
+}
+
+.media video{
+  transform:translateZ(0);
+  will-change:transform;
+}
+
+/* 비디오가 포함된 큰 카드에 blur/filter를 걸면 프레임 드랍이 커지므로
+   등장/퇴장 애니메이션은 transform + opacity 중심으로 처리 */
+@keyframes impactLeft{
+  0%{opacity:0;transform:translate3d(-150px,0,0) scale(.86) rotateY(18deg);}
+  52%{opacity:1;transform:translate3d(14px,0,0) scale(1.045) rotateY(-4deg);}
+  76%{transform:translate3d(-5px,0,0) scale(.992) rotateY(0);}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1);}
+}
+
+@keyframes impactRight{
+  0%{opacity:0;transform:translate3d(150px,0,0) scale(.86) rotateY(-18deg);}
+  52%{opacity:1;transform:translate3d(-14px,0,0) scale(1.045) rotateY(4deg);}
+  76%{transform:translate3d(5px,0,0) scale(.992) rotateY(0);}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1);}
+}
+
+@keyframes centerImpact{
+  0%{opacity:0;transform:translateZ(0) scale(.72);}
+  60%{opacity:1;transform:translateZ(0) scale(1.09);}
+  100%{opacity:1;transform:translateZ(0) scale(1);}
+}
+
+@keyframes exitLeft{
+  to{opacity:0;transform:translate3d(-180px,0,0) scale(.86) rotateY(-14deg);}
+}
+
+@keyframes exitRight{
+  to{opacity:0;transform:translate3d(180px,0,0) scale(.86) rotateY(14deg);}
+}
+
+@keyframes exitCenter{
+  to{opacity:0;transform:translateZ(0) scale(.68);}
+}
+
+
+/* =========================================================
+   VIDEO PERFORMANCE MODE
+   영상이 재생되는 카드에서는 GPU 합성 비용이 큰
+   blur / rotateY / scale / reflection / box-shadow 변화를 제거.
+   출력 애니메이션은 translate + opacity 중심으로 처리.
+   ========================================================= */
+
+.media{
+  contain:paint;
+}
+
+.media video{
+  display:block;
+  transform:translate3d(0,0,0);
+  -webkit-transform:translate3d(0,0,0);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  will-change:auto;
+}
+
+/* 출력 중 반사광 애니메이션은 비디오 디코딩과 합성 부담이 커서 비활성화 */
+.stage.sequence .media::before{
+  animation:none !important;
+  opacity:0 !important;
+}
+
+/* 출력 중 무거운 그림자 합성 최소화 */
+.stage.sequence .player-card{
+  box-shadow:none !important;
+}
+
+/* 좌우 카드: 순수 2D 이동 + opacity */
+.stage.sequence .player-card.leftish{
+  animation:perfImpactLeft .62s cubic-bezier(.16,1,.3,1) 0s both,
+            perfExitLeft .42s cubic-bezier(.7,0,.84,0) 3.82s forwards !important;
+}
+
+.stage.sequence .player-card.rightish{
+  animation:perfImpactRight .62s cubic-bezier(.16,1,.3,1) .035s both,
+            perfExitRight .42s cubic-bezier(.7,0,.84,0) 3.82s forwards !important;
+}
+
+@keyframes perfImpactLeft{
+  0%{
+    opacity:0;
+    transform:translate3d(-110px,0,0);
+  }
+  100%{
+    opacity:1;
+    transform:translate3d(0,0,0);
+  }
+}
+
+@keyframes perfImpactRight{
+  0%{
+    opacity:0;
+    transform:translate3d(110px,0,0);
+  }
+  100%{
+    opacity:1;
+    transform:translate3d(0,0,0);
+  }
+}
+
+@keyframes perfExitLeft{
+  from{
+    opacity:1;
+    transform:translate3d(0,0,0);
+  }
+  to{
+    opacity:0;
+    transform:translate3d(-110px,0,0);
+  }
+}
+
+@keyframes perfExitRight{
+  from{
+    opacity:1;
+    transform:translate3d(0,0,0);
+  }
+  to{
+    opacity:0;
+    transform:translate3d(110px,0,0);
+  }
+}
+
+/* 중앙 요소도 blur / 큰 scale 변화 제거 */
+.stage.sequence .center{
+  animation:perfCenterIn .5s ease-out .08s both,
+            perfCenterOut .36s ease-in 3.82s forwards !important;
+}
+
+.stage.sequence .vs{
+  animation:perfVsIn .48s cubic-bezier(.16,1,.3,1) .12s both !important;
+}
+
+.stage.sequence .info{
+  animation:none !important;
+}
+
+@keyframes perfCenterIn{
+  from{opacity:0;transform:translate3d(0,12px,0);}
+  to{opacity:1;transform:translate3d(0,0,0);}
+}
+
+@keyframes perfCenterOut{
+  from{opacity:1;transform:translate3d(0,0,0);}
+  to{opacity:0;transform:translate3d(0,8px,0);}
+}
+
+@keyframes perfVsIn{
+  from{opacity:0;transform:translate3d(0,0,0) scale(.92);}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1);}
+}
+
 </style>
 </head>
 
@@ -1300,7 +1475,12 @@ $('modeToggleBtn').addEventListener('click', toggleForceMode);
   $('outputBtn').addEventListener('click', ()=>{
     if(state.running) return;
 
-    applySelectedToOverlay();
+    /*
+      현재 프리뷰는 이미 선택된 매치가 반영된 상태이므로
+      여기서 applySelectedToOverlay()를 다시 호출하지 않습니다.
+      다시 호출하면 renderMedia()가 video DOM을 새로 생성해
+      출력 시작 순간 영상이 재로딩되며 끊겨 보일 수 있습니다.
+    */
 
     /* 메인 화면 애니메이션 */
     playSequence();
@@ -1997,7 +2177,7 @@ function clearOverlay(){
 
 function playSequence(){
   const stage = $('stage');
-  if(!stage) return;
+  if(!stage || state.running) return;
 
   clearTimeout(state.timer);
   state.running = true;
@@ -2008,19 +2188,25 @@ function playSequence(){
     outputBtn.textContent = '출력 중...';
   }
 
+  /* 기존 영상 DOM은 절대 재생성하지 않고,
+     브라우저에 두 프레임의 합성 준비 시간을 준 뒤 시작 */
   stage.classList.remove('sequence');
-  void stage.offsetWidth;
-  stage.classList.add('sequence');
 
-  state.timer = setTimeout(()=>{
-    stage.classList.remove('sequence');
-    state.running = false;
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      stage.classList.add('sequence');
 
-    if(outputBtn){
-      outputBtn.disabled = false;
-      outputBtn.textContent = '출력하기';
-    }
-  }, 4500);
+      state.timer = setTimeout(()=>{
+        stage.classList.remove('sequence');
+        state.running = false;
+
+        if(outputBtn){
+          outputBtn.disabled = false;
+          outputBtn.textContent = '출력하기';
+        }
+      }, 4500);
+    });
+  });
 }
 
 
