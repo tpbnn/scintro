@@ -584,6 +584,19 @@ height:var(--map-box-height);
   width:100%;
 }
 
+.open-window-btn{
+  margin-top:9px;
+  width:100%;
+  color:#fff;
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  border:1px solid rgba(96,165,250,.65);
+  box-shadow:0 10px 22px rgba(37,99,235,.28);
+}
+
+.open-window-btn:hover{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+}
+
 .match-input{
   position:relative;
   display:grid;
@@ -1044,6 +1057,54 @@ body.force-portrait .player-card{
 
 
 
+
+/* 메인 화면 전용 팝업 */
+body.popup-mode{
+  overflow:hidden !important;
+}
+
+body.popup-mode .app{
+  width:100vw;
+  height:100vh;
+  padding:0;
+  gap:0;
+}
+
+body.popup-mode .page-header,
+body.popup-mode .sidebar{
+  display:none !important;
+}
+
+body.popup-mode .main{
+  display:block;
+  width:100vw;
+  height:100vh;
+  min-height:100vh;
+}
+
+body.popup-mode .preview{
+  width:100vw;
+  height:100vh;
+  min-height:100vh;
+  border:0;
+  border-radius:0;
+}
+
+
+/* 새창으로 열기 버튼 - .ghost 스타일보다 우선 */
+.ghost.open-window-btn{
+  color:#ffffff !important;
+  background:linear-gradient(135deg,#f00202,#b80606) !important;
+  border:1px solid rgba(255, 93, 93, 0.72) !important;
+  box-shadow:0 10px 22px rgba(37,99,235,.30) !important;
+}
+
+.ghost.open-window-btn:hover{
+  background:linear-gradient(135deg,#d81d1d,#eb2525) !important;
+  border-color:rgba(147,197,253,.85) !important;
+  filter:brightness(1.06);
+}
+
 </style>
 </head>
 
@@ -1108,6 +1169,7 @@ body.force-portrait .player-card{
           <button id="applyChromaBtn">적용</button>
         </div>
         <button class="ghost chroma-toggle" id="chromaToggleBtn">크로마키 OFF</button>
+        <button class="ghost open-window-btn" id="openWindowBtn">새창으로 열기</button>
       </section>
 
 
@@ -1190,6 +1252,13 @@ const state = {
 };
 
 window.addEventListener('DOMContentLoaded', async ()=>{
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('popup') === '1'){
+    document.body.classList.add('popup-mode');
+  }
+
+  loadFontSettings();
+  loadChromaSettings();
   bindEvents();
   await loadTierXlsx();
   setupAutocomplete('inputA','suggestA');
@@ -1213,6 +1282,7 @@ window.addEventListener('resize', ()=>{
 function bindEvents(){
   $('applyChromaBtn').addEventListener('click', applyChromaColor);
   $('chromaToggleBtn').addEventListener('click', toggleChroma);
+  $('openWindowBtn').addEventListener('click', openInNewWindow);
   $('addBtn').addEventListener('click', addMatch);
 
 $('modeToggleBtn').addEventListener('click', toggleForceMode);
@@ -1231,8 +1301,296 @@ $('modeToggleBtn').addEventListener('click', toggleForceMode);
     if(state.running) return;
 
     applySelectedToOverlay();
+
+    /* 메인 화면 애니메이션 */
     playSequence();
+
+    /* 열려 있는 팝업에도 같은 출력 애니메이션 실행 */
+    triggerPopupOutputAnimation();
   });
+}
+
+
+
+
+
+const OUTPUT_ANIMATION_KEY = 'matchIntroOutputAnimation';
+
+function triggerPopupOutputAnimation(){
+  try{
+    localStorage.setItem(
+      OUTPUT_ANIMATION_KEY,
+      JSON.stringify({
+        time: Date.now()
+      })
+    );
+  }catch(e){
+    console.warn('출력 애니메이션 동기화 실패:', e);
+  }
+}
+
+const MATCH_SETTING_KEY = 'matchIntroSelectedMatch';
+
+function getSelectedMatchPayload(){
+  const match = state.matches[state.selectedIndex];
+  if(!match) return null;
+
+  const score = getScoreForIndex(state.selectedIndex);
+
+  return {
+    match: {
+      a: match.a,
+      b: match.b,
+      map: match.map,
+      winner: match.winner || null
+    },
+    scoreA: score.scoreA,
+    scoreB: score.scoreB
+  };
+}
+
+function saveSelectedMatch(){
+  try{
+    const payload = getSelectedMatchPayload();
+    if(payload){
+      localStorage.setItem(MATCH_SETTING_KEY, JSON.stringify(payload));
+    }else{
+      localStorage.removeItem(MATCH_SETTING_KEY);
+    }
+  }catch(e){
+    console.warn('선택 경기 저장 실패:', e);
+  }
+}
+
+function applySelectedMatchPayload(payload){
+  if(!payload || !payload.match) return;
+
+  const match = payload.match;
+  const scoreA = Number(payload.scoreA || 0);
+  const scoreB = Number(payload.scoreB || 0);
+
+  applyPlayer('A', match.a, findPlayer(match.a), scoreA);
+  applyPlayer('B', match.b, findPlayer(match.b), scoreB);
+  $('matchTitle').textContent = match.map || '맵 이름';
+
+  requestAnimationFrame(runAutoFit);
+}
+
+
+function loadSelectedMatchFromUrl(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('matchData');
+    if(!raw) return false;
+
+    const payload = JSON.parse(decodeURIComponent(raw));
+    applySelectedMatchPayload(payload);
+    return true;
+  }catch(e){
+    console.warn('URL 선택 경기 불러오기 실패:', e);
+    return false;
+  }
+}
+
+function loadSelectedMatch(){
+  try{
+    const saved = localStorage.getItem(MATCH_SETTING_KEY);
+    if(saved) applySelectedMatchPayload(JSON.parse(saved));
+  }catch(e){
+    console.warn('선택 경기 불러오기 실패:', e);
+  }
+}
+
+const CHROMA_SETTING_KEY = 'matchIntroChromaSettings';
+
+function getCurrentChromaSettings(){
+  return {
+    on: !!state.chromaOn,
+    color: ($('chromaInput')?.value || '#00ff00').trim() || '#00ff00'
+  };
+}
+
+function saveChromaSettings(){
+  try{
+    localStorage.setItem(CHROMA_SETTING_KEY, JSON.stringify(getCurrentChromaSettings()));
+  }catch(e){
+    console.warn('크로마키 설정 저장 실패:', e);
+  }
+}
+
+function applyChromaSettings(settings){
+  if(!settings) return;
+
+  const color = settings.color || '#00ff00';
+  state.chromaOn = !!settings.on;
+
+  document.documentElement.style.setProperty('--chroma', color);
+
+  const input = $('chromaInput');
+  if(input) input.value = color;
+
+  const preview = $('preview');
+  if(preview) preview.classList.toggle('chroma', state.chromaOn);
+
+  const btn = $('chromaToggleBtn');
+  if(btn){
+    btn.textContent = state.chromaOn ? '크로마키 ON' : '크로마키 OFF';
+    btn.classList.toggle('active', state.chromaOn);
+  }
+}
+
+function loadChromaSettings(){
+  try{
+    const saved = localStorage.getItem(CHROMA_SETTING_KEY);
+    if(saved) applyChromaSettings(JSON.parse(saved));
+  }catch(e){
+    console.warn('크로마키 설정 불러오기 실패:', e);
+  }
+}
+
+const FONT_SETTING_KEY = 'matchIntroFontSettings';
+
+function getCurrentFontSettings(){
+  const rootStyle = getComputedStyle(document.documentElement);
+
+  return {
+    name: parseFloat(rootStyle.getPropertyValue('--name-font')) || 39,
+    map: parseFloat(rootStyle.getPropertyValue('--map-font')) || 32,
+    vs: parseFloat(rootStyle.getPropertyValue('--vs-font')) || 48,
+    score: parseFloat(rootStyle.getPropertyValue('--score-font')) || 44,
+    mapBoxWidth: parseFloat(rootStyle.getPropertyValue('--map-box-width')) || 180,
+    mapBoxHeight: parseFloat(rootStyle.getPropertyValue('--map-box-height')) || 58
+  };
+}
+
+function saveFontSettings(){
+  try{
+    localStorage.setItem(FONT_SETTING_KEY, JSON.stringify(getCurrentFontSettings()));
+  }catch(e){
+    console.warn('폰트 설정 저장 실패:', e);
+  }
+}
+
+function applyFontSettings(settings){
+  if(!settings) return;
+
+  const root = document.documentElement;
+
+  if(settings.name != null) root.style.setProperty('--name-font', settings.name + 'px');
+  if(settings.map != null) root.style.setProperty('--map-font', settings.map + 'px');
+  if(settings.vs != null) root.style.setProperty('--vs-font', settings.vs + 'px');
+  if(settings.score != null) root.style.setProperty('--score-font', settings.score + 'px');
+
+  const mapValue = Number(settings.map || 32);
+  root.style.setProperty(
+    '--map-box-width',
+    (settings.mapBoxWidth != null ? settings.mapBoxWidth : Math.round(mapValue * 5.7)) + 'px'
+  );
+  root.style.setProperty(
+    '--map-box-height',
+    (settings.mapBoxHeight != null ? settings.mapBoxHeight : Math.round(mapValue * 1.8)) + 'px'
+  );
+
+  const controls = {
+    nameFontRange: settings.name,
+    mapFontRange: settings.map,
+    vsFontRange: settings.vs,
+    scoreFontRange: settings.score
+  };
+
+  Object.entries(controls).forEach(([id, value])=>{
+    const input = $(id);
+    if(input && value != null) input.value = value;
+
+    const valueEl = $(id.replace('Range', 'Value'));
+    if(valueEl && value != null) valueEl.textContent = value;
+  });
+
+  requestAnimationFrame(runAutoFit);
+}
+
+function loadFontSettings(){
+  try{
+    const saved = localStorage.getItem(FONT_SETTING_KEY);
+    if(saved) applyFontSettings(JSON.parse(saved));
+  }catch(e){
+    console.warn('폰트 설정 불러오기 실패:', e);
+  }
+}
+
+/* 메인창에서 슬라이더를 움직이면 이미 열린 팝업에도 즉시 반영 */
+window.addEventListener('storage', e=>{
+  if(!e.newValue) return;
+
+  try{
+    if(e.key === FONT_SETTING_KEY){
+      applyFontSettings(JSON.parse(e.newValue));
+    }
+
+    if(e.key === CHROMA_SETTING_KEY){
+      applyChromaSettings(JSON.parse(e.newValue));
+    }
+
+    if(e.key === MATCH_SETTING_KEY){
+      applySelectedMatchPayload(JSON.parse(e.newValue));
+    }
+
+    if(e.key === OUTPUT_ANIMATION_KEY){
+      const params = new URLSearchParams(window.location.search);
+      if(params.get('popup') === '1'){
+        playSequence();
+      }
+    }
+  }catch(err){
+    console.warn('설정 동기화 실패:', err);
+  }
+});
+
+function openInNewWindow(){
+  saveFontSettings();
+  saveChromaSettings();
+  saveSelectedMatch();
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('popup', '1');
+
+  const matchPayload = getSelectedMatchPayload();
+  if(matchPayload){
+    url.searchParams.set(
+      'matchData',
+      encodeURIComponent(JSON.stringify(matchPayload))
+    );
+  }
+
+  const popupWidth = 1280;
+  const popupHeight = 720;
+  const left = Math.max(0, Math.round((window.screen.width - popupWidth) / 2));
+  const top = Math.max(0, Math.round((window.screen.height - popupHeight) / 2));
+
+  const popup = window.open(
+    url.toString(),
+    'matchIntroPopup',
+    `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=no`
+  );
+
+  /* 이미 열린 팝업을 재사용하는 경우에도 현재 선택 화면을 즉시 반영 */
+  if(popup && matchPayload){
+    const syncNow = ()=>{
+      try{
+        if(
+          !popup.closed &&
+          typeof popup.applySelectedMatchPayload === 'function'
+        ){
+          popup.applySelectedMatchPayload(matchPayload);
+        }
+      }catch(e){}
+    };
+
+    /* 기존 팝업이면 거의 즉시, 새 팝업이면 로드 직후 한 번 더 */
+    setTimeout(syncNow, 80);
+    setTimeout(syncNow, 300);
+    setTimeout(syncNow, 800);
+  }
 }
 
 function toggleForceMode(){
@@ -1254,10 +1612,12 @@ input.addEventListener('input', ()=>{
   const value = Number(input.value);
 
   document.documentElement.style.setProperty(cssVar, value + 'px');
+  saveFontSettings();
 
   if(inputId === 'mapFontRange'){
     document.documentElement.style.setProperty('--map-box-width', Math.round(value * 5.7) + 'px');
     document.documentElement.style.setProperty('--map-box-height', Math.round(value * 1.8) + 'px');
+    saveFontSettings();
   }
 
   if(valueEl){
@@ -1283,6 +1643,7 @@ input.addEventListener('input', ()=>{
 function applyChromaColor(){
   const color = $('chromaInput').value.trim() || '#00ff00';
   document.documentElement.style.setProperty('--chroma', color);
+  saveChromaSettings();
 }
 
 function toggleChroma(){
@@ -1292,6 +1653,7 @@ function toggleChroma(){
   $('preview').classList.toggle('chroma', state.chromaOn);
   $('chromaToggleBtn').textContent = state.chromaOn ? '크로마키 ON' : '크로마키 OFF';
   $('chromaToggleBtn').classList.toggle('active', state.chromaOn);
+  saveChromaSettings();
 }
 
 async function loadTierXlsx(){
@@ -1450,6 +1812,7 @@ function addMatch(){
 
   renderMatchList();
   applySelectedToOverlay();
+  saveSelectedMatch();
 }
 
 function renderMatchList(){
@@ -1496,6 +1859,7 @@ function selectMatch(index){
   state.selectedIndex = index;
   renderMatchList();
   applySelectedToOverlay();
+  saveSelectedMatch();
 }
 
 function deleteMatch(index){
@@ -1504,13 +1868,17 @@ function deleteMatch(index){
 
   renderMatchList();
   applySelectedToOverlay();
+  saveSelectedMatch();
 }
 
 function toggleWinner(index, side){
   state.matches[index].winner = state.matches[index].winner === side ? null : side;
   renderMatchList();
 
-  if(index === state.selectedIndex) applySelectedToOverlay();
+  if(index === state.selectedIndex){
+    applySelectedToOverlay();
+    saveSelectedMatch();
+  }
 }
 
 function getScoreForIndex(index){
@@ -1544,6 +1912,11 @@ function applySelectedToOverlay(){
   $('matchTitle').textContent = match.map;
 
   requestAnimationFrame(runAutoFit);
+
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('popup') !== '1'){
+    saveSelectedMatch();
+  }
 }
 
 function applyPlayer(side, fallbackName, player, score){
@@ -1624,11 +1997,16 @@ function clearOverlay(){
 
 function playSequence(){
   const stage = $('stage');
+  if(!stage) return;
 
   clearTimeout(state.timer);
   state.running = true;
-  $('outputBtn').disabled = true;
-  $('outputBtn').textContent = '출력 중...';
+
+  const outputBtn = $('outputBtn');
+  if(outputBtn){
+    outputBtn.disabled = true;
+    outputBtn.textContent = '출력 중...';
+  }
 
   stage.classList.remove('sequence');
   void stage.offsetWidth;
@@ -1637,8 +2015,11 @@ function playSequence(){
   state.timer = setTimeout(()=>{
     stage.classList.remove('sequence');
     state.running = false;
-    $('outputBtn').disabled = false;
-    $('outputBtn').textContent = '출력하기';
+
+    if(outputBtn){
+      outputBtn.disabled = false;
+      outputBtn.textContent = '출력하기';
+    }
   }, 4500);
 }
 
